@@ -11,6 +11,11 @@ export interface Product {
   id_categoria?: number; // Categoría del producto
   categoria?: string; // Nombre de la categoría
   imagen?: string; // URL de la imagen del producto
+  codigo_barras?: string; // Código de barras
+  descripcion?: string; // Descripción del producto
+  fecha_registro?: string; // Fecha de registro
+  fecha_vencimiento?: string; // Fecha de vencimiento
+  lote?: string; // Número de lote
 }
 
 @Injectable({ providedIn: 'root' })
@@ -45,7 +50,12 @@ export class ProductService {
           sales: p.ventas || p.sales || 0,
           id_categoria: p.id_categoria || p.idCategoria,
           categoria: p.categoria,
-          imagen: p.imagen || p.image || null
+          imagen: p.imagen || p.image || null,
+          codigo_barras: p.codigo_barras || p.codigoBarras || '',
+          descripcion: p.descripcion || '',
+          fecha_registro: p.fecha_registro || p.fechaRegistro,
+          fecha_vencimiento: p.fecha_vencimiento || p.fechaVencimiento,
+          lote: p.lote || 'L-MAS-001'
         }));
         
         // Guardar en caché

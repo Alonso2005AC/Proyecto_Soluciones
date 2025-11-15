@@ -86,10 +86,13 @@
 
           <div class="payment-method-selector">
             <label>Método de pago:</label>
-            <select [(ngModel)]="metodoPago" class="payment-select">
+            <select [(ngModel)]="metodoPago" class="payment-select" required>
               <option value="tarjeta">💳 Tarjeta de crédito/débito</option>
               <option value="agora">💵 Pago en agora</option>
             </select>
+            <p style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+              Seleccionado: <strong>{{ metodoPago || 'Ninguno' }}</strong>
+            </p>
           </div>
 
           <button class="btn-checkout" (click)="checkout()" [disabled]="procesandoPago">
@@ -116,3 +119,5 @@
     </div>
   </div>
 </div>
+
+<app-footer></app-footer>

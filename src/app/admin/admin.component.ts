@@ -123,17 +123,40 @@ export class AdminComponent implements OnInit {
     const updateData = {
       nombre: product.name,
       precio: product.price,
-      stock: product.stock
+      stock: product.stock,
+      id_categoria: product.id_categoria || null,
+      codigo_barras: product.codigo_barras || '',
+      descripcion: product.descripcion || '',
+      imagen: product.imagen || null,
+      fecha_registro: product.fecha_registro || new Date().toISOString().split('T')[0],
+      fecha_vencimiento: product.fecha_vencimiento || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      lote: product.lote || 'L-MAS-001'
     };
     
+    console.log('📝 Actualizando producto ID:', product.id);
+    console.log('📦 Datos enviados:', JSON.stringify(updateData, null, 2));
+    
     this.apiService.updateProducto(product.id, updateData).subscribe({
-      next: () => {
+      next: (response) => {
+        console.log('✅ Respuesta exitosa:', response);
         alert('✅ Producto actualizado');
         this.loadData();
       },
       error: (err) => {
-        console.error('Error al actualizar:', err);
-        alert('❌ Error al actualizar producto');
+        console.error('❌ Error completo:', err);
+        console.error('❌ Status:', err.status);
+        console.error('❌ Error body:', err.error);
+        console.error('❌ Message:', err.error?.message);
+        console.error('❌ Trace:', err.error?.trace);
+        
+        let errorMsg = 'Error desconocido';
+        if (err.error?.message) {
+          errorMsg = err.error.message;
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+        
+        alert('❌ Error al actualizar producto:\n\n' + errorMsg);
       }
     });
   }

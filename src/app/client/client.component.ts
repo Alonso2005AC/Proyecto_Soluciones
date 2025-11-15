@@ -1,14 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ProductService, Product } from '../services/product.service';
 import { ApiService } from '../services/api.service';
 import { CartService } from '../services/cart.service';
 import { NavBarComponent } from '../components/nav-bar/nav-bar.component';
+import { FooterComponent } from '../components/footer/footer.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, NavBarComponent, FormsModule],
+  imports: [CommonModule, NavBarComponent, FooterComponent, FormsModule],
   selector: 'app-client',
   templateUrl: './client.component.html',
   styleUrls: ['./client.component.css']
@@ -35,7 +37,8 @@ export class ClientComponent implements OnInit {
   constructor(
     private productService: ProductService,
     private apiService: ApiService,
-    private cartService: CartService
+    private cartService: CartService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -131,7 +134,27 @@ export class ClientComponent implements OnInit {
   
   addToCart(product: Product): void {
     this.cartService.addToCart(product, 1);
-    alert(`✅ ${product.name} agregado al carrito`);
+    this.showToast(`${product.name} agregado al carrito`, 'success');
+  }
+
+  goToProductDetail(productId: number): void {
+    this.router.navigate(['/product', productId]);
+  }
+
+  showToast(message: string, type: 'success' | 'error' | 'info' = 'success'): void {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+      <div class="toast-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</div>
+      <div class="toast-message">${message}</div>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
   }
   
   getStars(rating: number = 4.5): number[] {

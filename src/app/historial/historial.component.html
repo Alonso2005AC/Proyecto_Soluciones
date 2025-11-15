@@ -1,0 +1,89 @@
+<app-nav-bar></app-nav-bar>
+
+<div class="historial-page">
+  <div class="historial-container">
+    <div class="historial-header">
+      <h1>📋 Historial de Compras</h1>
+      <button class="btn-back" (click)="volver()">
+        <i class="fa-solid fa-arrow-left"></i> Volver
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="cargando" class="loading">
+      <div class="spinner"></div>
+      <p>Cargando historial...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error && !cargando" class="error-message">
+      <i class="fa-solid fa-exclamation-circle"></i>
+      <p>{{ error }}</p>
+      <button class="btn-retry" (click)="cargarHistorial()">
+        <i class="fa-solid fa-refresh"></i> Reintentar
+      </button>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!cargando && !error && ventas.length === 0" class="empty-state">
+      <div class="empty-icon">📦</div>
+      <h2>No hay compras registradas</h2>
+      <p>Cuando realices tu primera compra, aparecerá aquí</p>
+      <button class="btn-shop" (click)="volver()">
+        <i class="fa-solid fa-shopping-cart"></i> Ir a comprar
+      </button>
+    </div>
+
+    <!-- Ventas List -->
+    <div *ngIf="!cargando && !error && ventas.length > 0" class="ventas-list">
+      <div class="venta-card" *ngFor="let venta of ventas">
+        <div class="venta-header">
+          <div class="venta-info">
+            <h3>Pedido #{{ venta.id }}</h3>
+            <p class="venta-fecha">{{ formatearFecha(venta.fecha_venta) }}</p>
+          </div>
+          <span class="badge" [ngClass]="getEstadoBadgeClass(venta.estado)">
+            {{ venta.estado }}
+          </span>
+        </div>
+
+        <div class="venta-body">
+          <div class="venta-detail">
+            <span class="detail-label">{{ getMetodoPagoIcon(venta.metodo_pago) }} Método de pago:</span>
+            <span class="detail-value">{{ venta.metodo_pago }}</span>
+          </div>
+
+          <div class="venta-detail">
+            <span class="detail-label">💰 Total:</span>
+            <span class="detail-value total-amount">S/{{ venta.total | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="venta-detail" *ngIf="venta.observacion">
+            <span class="detail-label">📝 Observación:</span>
+            <span class="detail-value">{{ venta.observacion }}</span>
+          </div>
+
+          <div class="venta-detail" *ngIf="facturas.get(venta.id)">
+            <span class="detail-label">📄 Comprobante:</span>
+            <span class="detail-value">{{ facturas.get(venta.id)?.tipo_comprobante | titlecase }}</span>
+          </div>
+        </div>
+
+        <div class="venta-actions">
+          <button class="btn-action btn-primary" (click)="verDetalles(venta.id)">
+            <i class="fa-solid fa-eye"></i> Ver detalles
+          </button>
+          <button 
+            class="btn-action btn-success" 
+            (click)="descargarFactura(venta.id)"
+            [disabled]="!facturas.get(venta.id)">
+            <i class="fa-solid fa-download"></i> 
+            {{ facturas.get(venta.id) ? 'Descargar factura' : 'Factura no disponible' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-footer></app-footer>

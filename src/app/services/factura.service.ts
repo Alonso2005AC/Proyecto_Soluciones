@@ -18,6 +18,8 @@ export interface DetalleVenta {
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
+  lote?: string;
+  fecha_vencimiento?: string;
 }
 
 export interface Factura {
