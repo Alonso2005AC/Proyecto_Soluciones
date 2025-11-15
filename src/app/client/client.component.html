@@ -1,0 +1,96 @@
+<app-nav-bar></app-nav-bar>
+<div class="products-page">
+  <aside class="filters-card">
+    <h3>Filtros</h3>
+    
+    <div class="filter-section">
+      <label class="filter-label">Categoría</label>
+      <select [(ngModel)]="selectedCategory" (change)="onCategoryChange()" class="filter-select">
+        <option [value]="0">Todas las categorías</option>
+        <option *ngFor="let cat of categories" [value]="cat.id_categoria">
+          {{ cat.nombre_categoria }}
+        </option>
+      </select>
+    </div>
+    
+    <div class="filter-section">
+      <label class="filter-label">Rango de precios</label>
+      <input 
+        type="range" 
+        [(ngModel)]="priceRange" 
+        [min]="minPrice" 
+        [max]="maxPrice" 
+        (input)="onPriceChange()" 
+        class="price-slider"
+      />
+      <div class="price-range-display">
+        <span>S/{{ minPrice }}</span>
+        <span>S/{{ priceRange | number:'1.0-0' }}</span>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="products-header">
+      <div>
+        <h2>Productos</h2>
+        <p class="products-count">{{ filteredProducts.length }} productos encontrados</p>
+      </div>
+      <div class="search-box">
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          (input)="onSearchChange()" 
+          placeholder="Buscar productos..." 
+          class="search-input"
+        />
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading-state">
+      <div class="skeleton-card" *ngFor="let i of [1,2,3,4,5,6]">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-text"></div>
+        <div class="skeleton-text short"></div>
+      </div>
+    </div>
+
+    <div *ngIf="error" class="error-state">
+      <p>{{ error }}</p>
+      <p class="error-hint">Verifica que el backend esté corriendo en http://localhost:8080</p>
+      <button class="btn-reload" (click)="loadData()">🔄 Reintentar</button>
+    </div>
+
+    <div *ngIf="!loading && !error && filteredProducts.length === 0" class="empty-state">
+      <p>No se encontraron productos con los filtros actuales</p>
+      <button class="btn-reload" (click)="selectedCategory = 0; searchTerm = ''; priceRange = maxPrice; applyFilters()">
+        🔄 Limpiar filtros
+      </button>
+    </div>
+
+    <div class="products-grid" *ngIf="!loading && filteredProducts.length > 0">
+      <article class="product-card" *ngFor="let p of filteredProducts; trackBy: trackByProductId">
+        <div class="product-image">
+          <img 
+            [src]="getProductImage(p)" 
+            [alt]="p.name"
+            loading="lazy"
+          />
+        </div>
+        <div class="product-info">
+          <div class="product-category">{{ p.categoria || 'Sin categoría' }}</div>
+          <h4 class="product-title">{{ p.name }}</h4>
+          <p class="product-desc">Selección premium de calidad garantizada</p>
+          <div class="product-rating">
+            <span class="star" *ngFor="let star of getStars()">★</span>
+            <span class="rating-count">4.5</span>
+          </div>
+          <div class="product-price">S/{{ p.price | number:'1.2-2' }}</div>
+          <button class="btn-add-cart" (click)="addToCart(p)">
+            🛒 Agregar al carrito
+          </button>
+        </div>
+      </article>
+    </div>
+  </main>
+</div>

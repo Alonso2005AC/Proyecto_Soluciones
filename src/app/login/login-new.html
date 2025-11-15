@@ -1,0 +1,90 @@
+<div class="login-shell">
+  <section class="client-login">
+    <img src="assets/img/Mass.png" alt="Logo Tienda Mass" class="logo" />
+    
+    <h2>¡Bienvenido!</h2>
+    <p class="welcome">Ingresa tus credenciales para continuar o comprar</p>
+
+    <div class="user-type-tabs">
+      <button type="button" class="tab-button active">
+        <i class="fa-solid fa-user"></i> Cliente
+      </button>
+      <button type="button" class="tab-button" (click)="showAdminModal = true">
+        <i class="fa-solid fa-user-shield"></i> Admin
+      </button>
+    </div>
+
+    <form (ngSubmit)="loginClient()">
+      <label>
+        Correo Electrónico
+        <div class="input-wrapper">
+          <i class="fa-solid fa-envelope input-icon"></i>
+          <input 
+            type="email" 
+            [(ngModel)]="clientEmail" 
+            name="email" 
+            placeholder="ejemplo@correo.com"
+            required 
+          />
+        </div>
+      </label>
+
+      <label>
+        Contraseña
+        <div class="input-wrapper">
+          <i class="fa-solid fa-lock input-icon"></i>
+          <input 
+            type="password" 
+            [(ngModel)]="clientPassword" 
+            name="password" 
+            placeholder="••••••••"
+            required 
+          />
+        </div>
+      </label>
+
+      <div class="actions">
+        <button type="submit" [disabled]="loading">
+          {{ loading ? 'Ingresando...' : 'Iniciar Sesión' }}
+        </button>
+      </div>
+    </form>
+
+    <div class="register-link">
+      ¿No tienes cuenta? <a href="/register">Regístrate aquí</a>
+    </div>
+
+    <div *ngIf="error" class="error">
+      {{ error }}
+    </div>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="showAdminModal" (click)="showAdminModal = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Acceso Administrador</h3>
+        <button type="button" class="close-button" (click)="showAdminModal = false">&times;</button>
+      </div>
+      <form (ngSubmit)="loginAdmin()">
+        <label>
+          Código administrador
+          <div class="input-wrapper">
+            <i class="fa-solid fa-key input-icon"></i>
+            <input 
+              type="password" 
+              [(ngModel)]="adminCode" 
+              name="code" 
+              placeholder="Ingresa código"
+              required 
+            />
+          </div>
+        </label>
+        <div class="actions">
+          <button type="submit" [disabled]="loading">
+            {{ loading ? 'Verificando...' : 'Acceder' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

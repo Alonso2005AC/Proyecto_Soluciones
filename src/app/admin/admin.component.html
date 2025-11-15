@@ -1,0 +1,202 @@
+<div class="admin-page">
+  <!-- Header -->
+  <header class="admin-header">
+    <div class="header-content">
+      <h1>🛠️ Panel de Administrador</h1>
+      <button class="btn-logout" (click)="logout()">
+        <i class="fa-solid fa-sign-out-alt"></i> Cerrar sesión
+      </button>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <nav class="admin-tabs">
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'productos'"
+      (click)="setActiveTab('productos')">
+      <i class="fa-solid fa-box"></i> Productos
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'estadisticas'"
+      (click)="setActiveTab('estadisticas')">
+      <i class="fa-solid fa-chart-bar"></i> Estadísticas
+    </button>
+  </nav>
+
+  <div class="admin-content">
+    <!-- Tab: Productos -->
+    <div *ngIf="activeTab === 'productos'" class="tab-content">
+      <div class="content-header">
+        <h2>Gestión de Productos</h2>
+        <button class="btn-add" (click)="openAddModal()">
+          <i class="fa-solid fa-plus"></i> Agregar Producto
+        </button>
+      </div>
+
+      <div *ngIf="loading" class="loading">Cargando productos...</div>
+
+      <div class="products-table" *ngIf="!loading">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Producto</th>
+              <th>Categoría</th>
+              <th>Precio (S/)</th>
+              <th>Stock</th>
+              <th>Ventas</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of products">
+              <td>{{ p.id }}</td>
+              <td class="product-name">{{ p.name }}</td>
+              <td>{{ getCategoryName(p.id_categoria) }}</td>
+              <td>
+                <input 
+                  type="number" 
+                  [(ngModel)]="p.price" 
+                  class="input-small"
+                  min="0"
+                  step="0.01"
+                />
+              </td>
+              <td>
+                <input 
+                  type="number" 
+                  [(ngModel)]="p.stock" 
+                  class="input-small"
+                  min="0"
+                />
+              </td>
+              <td class="sales-cell">{{ p.sales || 0 }}</td>
+              <td class="actions-cell">
+                <button class="btn-save" (click)="updateProduct(p)">
+                  <i class="fa-solid fa-save"></i>
+                </button>
+                <button class="btn-delete" (click)="deleteProduct(p)">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Estadísticas -->
+    <div *ngIf="activeTab === 'estadisticas'" class="tab-content">
+      <h2>Estadísticas de Ventas</h2>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i class="fa-solid fa-trophy"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Más Vendido</h3>
+            <p class="stat-value">{{ top?.name || '—' }}</p>
+            <p class="stat-detail">{{ top?.sales || 0 }} unidades</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon red">
+            <i class="fa-solid fa-arrow-down"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Menos Vendido</h3>
+            <p class="stat-value">{{ least?.name || '—' }}</p>
+            <p class="stat-detail">{{ least?.sales || 0 }} unidades</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon orange">
+            <i class="fa-solid fa-exclamation-triangle"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Sin Rotación</h3>
+            <p class="stat-value">{{ withoutRotation.length }}</p>
+            <p class="stat-detail">productos sin ventas</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i class="fa-solid fa-box"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Total Productos</h3>
+            <p class="stat-value">{{ products.length }}</p>
+            <p class="stat-detail">en inventario</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="products-without-rotation" *ngIf="withoutRotation.length > 0">
+        <h3>Productos sin rotación:</h3>
+        <div class="product-chips">
+          <span class="chip" *ngFor="let p of withoutRotation">
+            {{ p.name }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Agregar Producto -->
+  <div class="modal-backdrop" *ngIf="showAddModal" (click)="closeAddModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Agregar Nuevo Producto</h3>
+        <button class="close-btn" (click)="closeAddModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label>
+          Nombre del producto
+          <input type="text" [(ngModel)]="newProduct.nombre" placeholder="Ej: Tomate" />
+        </label>
+        
+        <label>
+          Código de barras
+          <input type="text" [(ngModel)]="newProduct.codigo_barras" placeholder="7750101000011" />
+        </label>
+        
+        <label>
+          Categoría
+          <select [(ngModel)]="newProduct.id_categoria">
+            <option [value]="0">Selecciona una categoría</option>
+            <option *ngFor="let cat of categories" [value]="cat.id_categoria">
+              {{ cat.nombre_categoria }}
+            </option>
+          </select>
+        </label>
+        
+        <div class="form-row">
+          <label>
+            Precio (S/)
+            <input type="number" [(ngModel)]="newProduct.precio" min="0" step="0.01" />
+          </label>
+          
+          <label>
+            Stock
+            <input type="number" [(ngModel)]="newProduct.stock" min="0" />
+          </label>
+        </div>
+        
+        <label>
+          Descripción
+          <textarea [(ngModel)]="newProduct.descripcion" rows="3" placeholder="Descripción del producto"></textarea>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeAddModal()">Cancelar</button>
+        <button class="btn-submit" (click)="addProduct()">Agregar Producto</button>
+      </div>
+    </div>
+  </div>
+</div>

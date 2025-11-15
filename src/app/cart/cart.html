@@ -1,0 +1,118 @@
+<app-nav-bar></app-nav-bar>
+<div class="cart-page">
+  <div class="cart-container">
+    <div class="cart-header">
+      <h1>🛒 Mi Carrito</h1>
+      <button class="btn-back" (click)="continueShopping()">
+        <i class="fa-solid fa-arrow-left"></i> Seguir comprando
+      </button>
+    </div>
+
+    <div *ngIf="cartItems.length === 0" class="empty-cart">
+      <div class="empty-icon">🛒</div>
+      <h2>Tu carrito está vacío</h2>
+      <p>Agrega productos para comenzar tu compra</p>
+      <button class="btn-shop" (click)="continueShopping()">
+        Ir a la tienda
+      </button>
+    </div>
+
+    <div *ngIf="cartItems.length > 0" class="cart-content">
+      <div class="cart-items">
+        <div class="cart-items-header">
+          <h3>Productos ({{ cartItems.length }})</h3>
+          <button class="btn-clear" (click)="clearCart()">
+            <i class="fa-solid fa-trash"></i> Vaciar carrito
+          </button>
+        </div>
+
+        <div class="cart-item" *ngFor="let item of cartItems">
+          <div class="item-image">
+            <img 
+              [src]="item.product.imagen || 'https://via.placeholder.com/120x120/FFC107/000000?text=' + item.product.name" 
+              [alt]="item.product.name"
+              loading="lazy"
+              (error)="$any($event.target).src='https://via.placeholder.com/120x120/FFC107/000000?text=' + item.product.name"
+            />
+          </div>
+          
+          <div class="item-details">
+            <h4>{{ item.product.name }}</h4>
+            <p class="item-category">{{ item.product.categoria || 'Sin categoría' }}</p>
+            <p class="item-price">S/{{ item.product.price | number:'1.2-2' }}</p>
+          </div>
+
+          <div class="item-quantity">
+            <button class="qty-btn" (click)="decreaseQuantity(item.product.id)">
+              <i class="fa-solid fa-minus"></i>
+            </button>
+            <span class="qty-value">{{ item.quantity }}</span>
+            <button class="qty-btn" (click)="increaseQuantity(item.product.id)">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+
+          <div class="item-subtotal">
+            <p class="subtotal-label">Subtotal</p>
+            <p class="subtotal-value">S/{{ (item.product.price * item.quantity) | number:'1.2-2' }}</p>
+          </div>
+
+          <button class="btn-remove" (click)="removeItem(item.product.id)">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="cart-summary">
+        <div class="summary-card">
+          <h3>Resumen del pedido</h3>
+          
+          <div class="summary-line">
+            <span>Subtotal</span>
+            <span>S/{{ subtotal | number:'1.2-2' }}</span>
+          </div>
+          
+          <div class="summary-line">
+            <span>IGV (18%)</span>
+            <span>S/{{ igv | number:'1.2-2' }}</span>
+          </div>
+          
+          <div class="summary-divider"></div>
+          
+          <div class="summary-line summary-total">
+            <span>Total</span>
+            <span>S/{{ total | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="payment-method-selector">
+            <label>Método de pago:</label>
+            <select [(ngModel)]="metodoPago" class="payment-select">
+              <option value="tarjeta">💳 Tarjeta de crédito/débito</option>
+              <option value="agora">💵 Pago en agora</option>
+            </select>
+          </div>
+
+          <button class="btn-checkout" (click)="checkout()" [disabled]="procesandoPago">
+            <i class="fa-solid fa-credit-card"></i>
+            {{ procesandoPago ? 'Procesando pago...' : 'Proceder al pago' }}
+          </button>
+
+          <div class="payment-methods">
+            <p>Métodos de pago aceptados:</p>
+            <div class="payment-icons">
+              <i class="fa-brands fa-cc-visa"></i>
+              <i class="fa-brands fa-cc-mastercard"></i>
+              <i class="fa-solid fa-money-bill"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="delivery-info">
+          <h4><i class="fa-solid fa-truck"></i> Información de entrega</h4>
+          <p>Entrega gratis en compras mayores a S/50.00</p>
+          <p>Tiempo estimado: 24-48 horas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

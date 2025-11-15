@@ -1,0 +1,74 @@
+<div class="register-shell">
+  <section class="register-form">
+    <h2>Crear Cuenta</h2>
+    <p class="subtitle">Regístrate para empezar a comprar o solicitar artículos frescos</p>
+
+    <form (ngSubmit)="register()">
+      <div class="form-row">
+        <label>
+          Nombre
+          <div class="input-wrapper">
+            <i class="fa-solid fa-user input-icon"></i>
+            <input type="text" [(ngModel)]="nombre" name="nombre" required placeholder="Juan" />
+          </div>
+        </label>
+        <label>
+          Apellido
+          <div class="input-wrapper">
+            <i class="fa-solid fa-user input-icon"></i>
+            <input type="text" [(ngModel)]="apellido" name="apellido" required placeholder="Pérez" />
+          </div>
+        </label>
+      </div>
+
+      <label>
+        Correo Electrónico
+        <div class="input-wrapper">
+          <i class="fa-solid fa-envelope input-icon"></i>
+          <input type="email" [(ngModel)]="correo" name="correo" required placeholder="ejemplo@correo.com" />
+        </div>
+      </label>
+
+      <label>
+        Contraseña
+        <div class="input-wrapper">
+          <i class="fa-solid fa-lock input-icon"></i>
+          <input type="password" [(ngModel)]="contrasena" name="contrasena" required placeholder="Mínimo 6 caracteres" />
+        </div>
+      </label>
+
+      <label>
+        Teléfono
+        <div class="input-wrapper">
+          <i class="fa-solid fa-phone input-icon"></i>
+          <input type="tel" [(ngModel)]="telefono" name="telefono" placeholder="555-1234" />
+        </div>
+      </label>
+
+      <label>
+        Dirección de Entrega
+        <div class="input-wrapper">
+          <i class="fa-solid fa-location-dot input-icon"></i>
+          <input type="text" [(ngModel)]="direccion" name="direccion" placeholder="Calle Principal 123, Ciudad" />
+        </div>
+      </label>
+
+      <div class="actions">
+        <button type="submit" [disabled]="loading">
+          {{ loading ? 'Registrando...' : 'Registrarse' }}
+        </button>
+        <button type="button" class="secondary" (click)="goToLogin()">
+          Ya tengo cuenta
+        </button>
+      </div>
+    </form>
+
+    <div *ngIf="success" class="success-message">
+      {{ success }}
+    </div>
+
+    <div *ngIf="error" class="error-message">
+      {{ error }}
+    </div>
+  </section>
+</div>

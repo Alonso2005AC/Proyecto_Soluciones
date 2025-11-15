@@ -1,1 +1,94 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* Fondo global: amarillo muy claro tipo 'off-white' para toda la app */
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+body {
+	background-color: #fffbe6; /* amarillo muy claro; cambia el hex si quieres otra tonalidad */
+	color: #111827; /* texto oscuro por contraste */
+	margin: 0; /* aseguramos que ocupe toda la ventana sin márgenes del navegador */
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Si quieres que un contenedor tenga un fondo blanco (tarjeta), usa una clase como .card */
+.card {
+	background: #ffffff;
+	border: 1px solid rgba(0,0,0,0.08);
+	border-radius: 8px;
+	box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+/* Styles for products page similar to the screenshot */
+.products-page {
+	padding: 24px 32px;
+	display: grid;
+	grid-template-columns: 280px 1fr; /* sidebar + main */
+	gap: 24px;
+	align-items: start;
+}
+
+.filters-card {
+	padding: 16px;
+}
+
+.products-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 16px;
+}
+
+.products-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 20px;
+}
+
+.product-card {
+	display: flex;
+	flex-direction: column;
+	background: transparent; /* image fills top */
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.product-image {
+	width: 100%;
+	height: 220px;
+	object-fit: cover;
+	display: block;
+	border-radius: 12px 12px 0 0;
+}
+
+.product-info {
+	background: #ffffff; /* white panel under image */
+	padding: 12px 14px;
+	border: 1px solid rgba(0,0,0,0.06);
+	border-radius: 0 0 12px 12px;
+}
+
+.product-title {
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+
+.product-desc {
+	color: #6b7280;
+	font-size: 0.95rem;
+	margin-bottom: 8px;
+}
+
+.product-price {
+	font-weight: 700;
+	margin-top: 6px;
+}
+
+/* Responsive */
+@media (max-width: 1000px) {
+	/* Comentado para que no sobrescriba el componente */
+	/* .products-grid { grid-template-columns: repeat(2, 1fr); } */
+}
+@media (max-width: 700px) {
+	.products-page { grid-template-columns: 1fr; padding: 16px; }
+	/* .products-grid { grid-template-columns: 1fr; } */
+}
