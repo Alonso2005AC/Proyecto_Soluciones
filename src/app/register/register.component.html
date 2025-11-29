@@ -33,7 +33,15 @@
         Contraseña
         <div class="input-wrapper">
           <i class="fa-solid fa-lock input-icon"></i>
-          <input type="password" [(ngModel)]="contrasena" name="contrasena" required placeholder="Mínimo 6 caracteres" />
+          <input type="password" [(ngModel)]="contrasena" name="contrasena" required placeholder="Mínimo 8 caracteres, mayúscula, número, especial" />
+        </div>
+        <div class="password-hint" [ngClass]="{ invalid: !isPasswordValid() && contrasena.length > 0, valid: isPasswordValid() }">
+          <span *ngIf="contrasena.length > 0 && !isPasswordValid()">
+            La contraseña debe tener mínimo 8 caracteres, al menos una mayúscula, una minúscula, un número y un carácter especial.
+          </span>
+          <span *ngIf="isPasswordValid()">
+            ✔ Contraseña segura
+          </span>
         </div>
       </label>
 

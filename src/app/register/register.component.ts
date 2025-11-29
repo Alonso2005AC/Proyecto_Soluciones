@@ -12,6 +12,10 @@ import { ApiService } from '../services/api.service';
   styleUrls: ['./register.component.css']
 })
 export class RegisterComponent {
+    isPasswordValid(): boolean {
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+      return passwordRegex.test(this.contrasena);
+    }
   nombre: string = '';
   apellido: string = '';
   correo: string = '';
@@ -28,6 +32,14 @@ export class RegisterComponent {
     this.error = '';
     this.success = '';
     this.loading = true;
+
+    // Validación de contraseña segura
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+    if (!passwordRegex.test(this.contrasena)) {
+      this.error = 'La contraseña debe tener mínimo 8 caracteres, al menos una mayúscula, una minúscula, un número y un carácter especial.';
+      this.loading = false;
+      return;
+    }
 
     const cliente = {
       nombre: this.nombre,
@@ -54,7 +66,6 @@ export class RegisterComponent {
         console.error('Status:', err.status);
         console.error('Error body:', err.error);
         this.loading = false;
-        
         if (err.status === 400) {
           const mensajeBackend = typeof err.error === 'string' ? err.error : err.error?.message;
           this.error = mensajeBackend || 'Datos inválidos. Verifica todos los campos.';

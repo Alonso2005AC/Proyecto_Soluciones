@@ -66,7 +66,7 @@
 	width: 18px;
 	height: 18px;
 	border-radius: 50%;
-	background: #FFC107;
+	background: #956C12;
 	cursor: pointer;
 	border: 2px solid white;
 	box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -130,7 +130,7 @@
 
 .search-input:focus {
 	outline: none;
-	border-color: #FFC107;
+	border-color: #956C12;
 	box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.15);
 	background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23FFC107" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>');
 }
@@ -183,7 +183,7 @@
 
 .product-category {
 	font-size: 0.75rem;
-	color: #FFC107;
+	color: #956C12;
 	text-transform: uppercase;
 	margin-bottom: 10px;
 	font-weight: 700;
@@ -222,7 +222,7 @@
 }
 
 .star {
-	color: #FFC107;
+	color: #956C12;
 	font-size: 1rem;
 }
 
@@ -450,3 +450,4 @@
 .toast-info {
 	border-left: 4px solid #3b82f6;
 }
+

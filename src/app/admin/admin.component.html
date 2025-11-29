@@ -77,6 +77,9 @@
                 <button class="btn-save" (click)="updateProduct(p)">
                   <i class="fa-solid fa-save"></i>
                 </button>
+                <button class="btn-update-img" (click)="updateProductImage(p)">
+                  <i class="fa-solid fa-image"></i>
+                </button>
                 <button class="btn-delete" (click)="deleteProduct(p)">
                   <i class="fa-solid fa-trash"></i>
                 </button>
@@ -89,60 +92,178 @@
 
     <!-- Tab: Estadísticas -->
     <div *ngIf="activeTab === 'estadisticas'" class="tab-content">
-      <h2>Estadísticas de Ventas</h2>
+      <h2>📊 Dashboard de Estadísticas</h2>
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon green">
-            <i class="fa-solid fa-trophy"></i>
-          </div>
-          <div class="stat-info">
-            <h3>Más Vendido</h3>
-            <p class="stat-value">{{ top?.name || '—' }}</p>
-            <p class="stat-detail">{{ top?.sales || 0 }} unidades</p>
+      <div *ngIf="loadingDashboard" class="loading">Cargando estadísticas...</div>
+
+      <div *ngIf="!loadingDashboard">
+                <!-- Gráfico de Inventario por Categoría -->
+                <div class="dashboard-section" *ngIf="inventarioChartOption && inventarioChartOption.series">
+                  <h3>📊 Inventario por Categoría</h3>
+                  <div class="chart-container">
+                    <div echarts [options]="inventarioChartOption" class="echart-container"></div>
+                  </div>
+                </div>
+        <!-- Indicadores de Inventario Serial Ideal -->
+        <div class="dashboard-section">
+          <h3>📦 Inventario: Indicadores Clave</h3>
+          <ul class="inventario-list">
+            <li *ngFor="let msg of inventarioMensajes">
+              <i class="fa-solid fa-circle-info" style="color:#956C12;margin-right:8px;"></i>
+              {{ msg }}
+            </li>
+            <li *ngIf="inventarioMensajes.length === 0">
+              <i class="fa-solid fa-circle-info" style="color:#956C12;margin-right:8px;"></i>
+              No hay alertas ni indicadores especiales de inventario.
+            </li>
+          </ul>
+        </div>
+        <!-- Resumen General -->
+        <div class="dashboard-section" *ngIf="resumenGeneral">
+          <h3>📈 Resumen General</h3>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon blue">
+                <i class="fa-solid fa-shopping-cart"></i>
+              </div>
+              <div class="stat-info">
+                <h3>Total Ventas</h3>
+                <p class="stat-value">{{ resumenGeneral.totalVentas || 0 }}</p>
+                <p class="stat-detail">unidades vendidas</p>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon green">
+                <i class="fa-solid fa-dollar-sign"></i>
+              </div>
+              <div class="stat-info">
+                <h3>Ingresos Totales</h3>
+                <p class="stat-value">S/ {{ (resumenGeneral.totalIngresos || 0).toFixed(2) }}</p>
+                <p class="stat-detail">en ventas</p>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon orange">
+                <i class="fa-solid fa-box"></i>
+              </div>
+              <div class="stat-info">
+                <h3>Total Compras</h3>
+                <p class="stat-value">{{ resumenGeneral.totalCompras || 0 }}</p>
+                <p class="stat-detail">unidades compradas</p>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon red">
+                <i class="fa-solid fa-money-bill"></i>
+              </div>
+              <div class="stat-info">
+                <h3>Gastos Totales</h3>
+                <p class="stat-value">S/ {{ (resumenGeneral.totalGastos || 0).toFixed(2) }}</p>
+                <p class="stat-detail">en compras</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon red">
-            <i class="fa-solid fa-arrow-down"></i>
-          </div>
-          <div class="stat-info">
-            <h3>Menos Vendido</h3>
-            <p class="stat-value">{{ least?.name || '—' }}</p>
-            <p class="stat-detail">{{ least?.sales || 0 }} unidades</p>
+        <!-- Ventas por Año - Gráfico de Barras ECharts -->
+        <div class="dashboard-section" *ngIf="ventasResumenAnio.length > 0">
+          <h3>📅 Ventas por Año</h3>
+          <div class="chart-container">
+            <div echarts [options]="ventasAnioChartOption" class="echart-container"></div>
           </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon orange">
-            <i class="fa-solid fa-exclamation-triangle"></i>
-          </div>
-          <div class="stat-info">
-            <h3>Sin Rotación</h3>
-            <p class="stat-value">{{ withoutRotation.length }}</p>
-            <p class="stat-detail">productos sin ventas</p>
+        <!-- Total en Dinero por Año - Gráfico de Línea con Área -->
+        <div class="dashboard-section" *ngIf="ventasTotalAnio.length > 0">
+          <h3>💰 Total en Dinero por Año</h3>
+          <div class="chart-container">
+            <div echarts [options]="ventasTotalAnioChartOption" class="echart-container"></div>
           </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon blue">
-            <i class="fa-solid fa-box"></i>
+        <!-- Ventas por Mes - Gráfico de Barras Verticales -->
+        <div class="dashboard-section" *ngIf="ventasDelMes.length > 0">
+          <h3>📆 Ventas por Mes</h3>
+          <div class="filter-row">
+            <label>
+              Año:
+              <select [(ngModel)]="anioSeleccionado" (change)="onAnioChange()">
+                <option [value]="2024">2024</option>
+                <option [value]="2025">2025</option>
+                <option [value]="2026">2026</option>
+              </select>
+            </label>
           </div>
-          <div class="stat-info">
-            <h3>Total Productos</h3>
-            <p class="stat-value">{{ products.length }}</p>
-            <p class="stat-detail">en inventario</p>
+          <div class="chart-container">
+            <div echarts [options]="ventasMesChartOption" class="echart-container"></div>
           </div>
         </div>
-      </div>
 
-      <div class="products-without-rotation" *ngIf="withoutRotation.length > 0">
-        <h3>Productos sin rotación:</h3>
-        <div class="product-chips">
-          <span class="chip" *ngFor="let p of withoutRotation">
-            {{ p.name }}
-          </span>
+        <!-- Total en Dinero por Mes - Gráfico de Barras Horizontales -->
+        <div class="dashboard-section" *ngIf="ventasTotalMes.length > 0">
+          <h3>💵 Total en Dinero por Mes ({{ anioSeleccionado }})</h3>
+          <div class="chart-container">
+            <div echarts [options]="ventasTotalMesChartOption" class="echart-container"></div>
+          </div>
+        </div>
+
+        <!-- Categoría Más Vendida - Gráfico de Dona (Donut Chart) -->
+        <div class="dashboard-section" *ngIf="categoriaMasVendida.length > 0">
+          <h3>🏆 Categorías Más Vendidas</h3>
+          <div class="chart-container">
+            <div echarts [options]="categoriasChartOption" class="echart-container"></div>
+          </div>
+        </div>
+
+        <!-- Producto Más Vendido por Categoría - Gráfico de Barras Horizontales -->
+        <div class="dashboard-section">
+          <h3>🎯 Productos Más Vendidos por Categoría</h3>
+          <div class="filter-row">
+            <label>
+              Categoría:
+              <select [(ngModel)]="categoriaSeleccionada" (change)="onCategoriaChange()">
+                <option [value]="0">Selecciona una categoría</option>
+                <option *ngFor="let cat of categories" [value]="cat.id_categoria">
+                  {{ cat.nombre_categoria }}
+                </option>
+              </select>
+            </label>
+          </div>
+          <div class="chart-container" *ngIf="productosPorCategoria.length > 0">
+            <div echarts [options]="productosChartOption" class="echart-container"></div>
+          </div>
+          <p class="empty-state" *ngIf="categoriaSeleccionada > 0 && productosPorCategoria.length === 0">
+            No hay productos vendidos en esta categoría
+          </p>
+        </div>
+
+        <!-- Forma de Pago Más Usada - Gráfico Circular (Pie Chart) -->
+        <div class="dashboard-section" *ngIf="formaPagoMasUsada.length > 0">
+          <h3>💳 Formas de Pago Más Usadas</h3>
+          <div class="chart-container">
+            <div echarts [options]="pagosChartOption" class="echart-container"></div>
+          </div>
+        </div>
+
+                <!-- Gráfico de Inventario por Categoría (DEBAJO de Formas de Pago) -->
+                <div class="dashboard-section" *ngIf="inventarioChartOption && inventarioChartOption.series">
+                  <h3>📊 Inventario por Categoría</h3>
+                  <div class="chart-container">
+                    <div echarts [options]="inventarioChartOption" class="echart-container"></div>
+                  </div>
+                </div>
+
+        <!-- Mensaje cuando no hay datos -->
+        <div class="dashboard-section" *ngIf="!loadingDashboard && ventasResumenAnio.length === 0 && ventasTotalAnio.length === 0">
+          <div class="empty-state">
+            <i class="fa-solid fa-chart-line" style="font-size: 3rem; color: #9ca3af; margin-bottom: 16px;"></i>
+            <h3>No hay datos disponibles</h3>
+            <p>Los endpoints del dashboard no están respondiendo o no hay datos en el sistema.</p>
+            <p>Asegúrate de que el backend esté corriendo en <strong>http://localhost:8080</strong></p>
+          </div>
         </div>
       </div>
     </div>
@@ -157,8 +278,8 @@
       </div>
       <div class="modal-body">
         <label>
-          Nombre del producto
-          <input type="text" [(ngModel)]="newProduct.nombre" placeholder="Ej: Tomate" />
+          Nombre del producto *
+          <input type="text" [(ngModel)]="newProduct.nombre" placeholder="Ej: Tomate" required />
         </label>
         
         <label>
@@ -167,8 +288,8 @@
         </label>
         
         <label>
-          Categoría
-          <select [(ngModel)]="newProduct.id_categoria">
+          Categoría *
+          <select [(ngModel)]="newProduct.id_categoria" required>
             <option [value]="0">Selecciona una categoría</option>
             <option *ngFor="let cat of categories" [value]="cat.id_categoria">
               {{ cat.nombre_categoria }}
@@ -178,15 +299,38 @@
         
         <div class="form-row">
           <label>
-            Precio (S/)
-            <input type="number" [(ngModel)]="newProduct.precio" min="0" step="0.01" />
+            Precio (S/) *
+            <input type="number" [(ngModel)]="newProduct.precio" min="0" step="0.01" required />
           </label>
           
           <label>
-            Stock
-            <input type="number" [(ngModel)]="newProduct.stock" min="0" />
+            Stock *
+            <input type="number" [(ngModel)]="newProduct.stock" min="0" required />
           </label>
         </div>
+        
+        <label>
+          Imagen URL (Imgur, etc.)
+          <input type="text" [(ngModel)]="newProduct.imagen" placeholder="https://i.imgur.com/ejemplo.jpg" />
+          <small style="color: #666; font-size: 0.9em;">Puedes subir una imagen a Imgur y pegar la URL aquí</small>
+        </label>
+        
+        <div class="form-row">
+          <label>
+            Lote
+            <input type="text" [(ngModel)]="newProduct.lote" placeholder="L-MAS-001" />
+          </label>
+          
+          <label>
+            Fecha de Ingreso
+            <input type="date" [(ngModel)]="newProduct.fecha_registro" />
+          </label>
+        </div>
+        
+        <label>
+          Fecha de Vencimiento
+          <input type="date" [(ngModel)]="newProduct.fecha_vencimiento" />
+        </label>
         
         <label>
           Descripción

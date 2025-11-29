@@ -130,6 +130,77 @@ export class ApiService {
     });
   }
 
+  // ============================================
+  // MÉTODOS DE DASHBOARD
+  // ============================================
+
+  // Resumen de Ventas por Tiempo
+  getDashboardVentasResumenAnio(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/dashboard/ventas/resumen-anio`);
+  }
+
+  getDashboardVentasResumenMes(anio: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/dashboard/ventas/resumen-mes/${anio}`);
+  }
+
+  getDashboardVentasLista(anio: number, mes: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/dashboard/ventas/lista/${anio}/${mes}`);
+  }
+
+  getDashboardVentasTotalAnio(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/dashboard/ventas/total-anio`);
+  }
+
+  getDashboardVentasTotalMes(anio: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/dashboard/ventas/total-mes/${anio}`);
+  }
+
+  // Resumen de Compras por Tiempo
+  getDashboardComprasResumenAnio(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/dashboard/compras/resumen-anio`);
+  }
+
+  getDashboardComprasResumenMes(anio: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/dashboard/compras/resumen-mes/${anio}`);
+  }
+
+  getDashboardComprasLista(anio: number, mes: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/dashboard/compras/lista/${anio}/${mes}`);
+  }
+
+  getDashboardComprasTotalAnio(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/dashboard/compras/total-anio`);
+  }
+
+  getDashboardComprasTotalMes(anio: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/dashboard/compras/total-mes/${anio}`);
+  }
+
+  // Resumen General
+  getDashboardResumenGeneral(): Observable<any> {
+    return this.http.get<any>(`${this.API_URL}/dashboard/resumen-general`);
+  }
+
+  // Dashboards Especiales
+  getDashboardCategoriaMasVendida(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/dashboard/categoria-mas-vendida`);
+  }
+
+  getDashboardProductoMasVendidoCategoria(idCategoria: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/dashboard/producto-mas-vendido-categoria/${idCategoria}`);
+  }
+
+  getDashboardFormaPagoMasUsada(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/dashboard/forma-pago-mas-usada`);
+  }
+
+    // Inventario Serial Ideal (Admin)
+    getInventarioSerialIdeal(): Observable<any> {
+      return this.http.get<any>(`${this.API_URL}/dashboard/inventario-serial-ideal`, {
+        headers: this.getAuthHeaders()
+      });
+    }
+
   // Helpers
   private getAuthHeaders(): HttpHeaders {
     const usuario = this.getUsuarioActual();

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,13 +14,38 @@ import { FooterComponent } from '../components/footer/footer.component';
   templateUrl: './cart.html',
   styleUrl: './cart.css',
 })
-export class Cart implements OnInit {
+export class Cart implements OnInit, OnDestroy {
   cartItems: CartItem[] = [];
   subtotal: number = 0;
   igv: number = 0;
   total: number = 0;
   procesandoPago = false;
   metodoPago: string = 'tarjeta'; // Método de pago seleccionado
+  
+  // QR Code y datos de Agora
+  qrCodeUrl: string = '';
+  transactionId: string = '';
+  countdown: number = 300; // 5 minutos en segundos
+  countdownInterval: any;
+  
+  // Modal y pasos de checkout
+  showCheckoutModal = false;
+  checkoutStep = 1;
+  userEmail = '';
+  
+  // Datos del formulario de checkout
+  checkoutData = {
+    email: '',
+    nombre: '',
+    apellidos: '',
+    documento: '',
+    telefono: '',
+    aceptaTerminos: false,
+    cardNumber: '',
+    cardExpiry: '',
+    cardCvv: '',
+    cardName: ''
+  };
 
   constructor(
     private cartService: CartService,
@@ -39,7 +64,59 @@ export class Cart implements OnInit {
     this.cartService.cartItems$.subscribe(items => {
       this.cartItems = items;
       this.calculateTotals();
+      
+      // Generar QR y transactionId cuando hay items y se selecciona agora
+      if (this.cartItems.length > 0) {
+        this.generateQRCode();
+      }
     });
+
+    // Iniciar countdown
+    this.startCountdown();
+  }
+
+  ngOnDestroy(): void {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+    }
+  }
+
+  generateQRCode(): void {
+    // Generar ID de transacción único
+    this.transactionId = 'TXN-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    
+    // Datos para el QR (en producción esto vendría del backend de Agora)
+    const qrData = {
+      merchant: 'TiendaMass',
+      amount: this.total.toFixed(2),
+      currency: 'PEN',
+      transactionId: this.transactionId,
+      description: 'Compra en TiendaMass'
+    };
+    
+    // Generar QR usando API pública (QuickChart)
+    const qrContent = encodeURIComponent(JSON.stringify(qrData));
+    this.qrCodeUrl = `https://quickchart.io/qr?text=${qrContent}&size=250&margin=2`;
+  }
+
+  startCountdown(): void {
+    this.countdown = 300; // Reiniciar a 5 minutos
+    
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+    }
+
+    this.countdownInterval = setInterval(() => {
+      this.countdown--;
+      
+      if (this.countdown <= 0) {
+        clearInterval(this.countdownInterval);
+        this.countdown = 0;
+        // Regenerar QR automáticamente
+        this.generateQRCode();
+        this.startCountdown();
+      }
+    }, 1000);
   }
 
   calculateTotals(): void {
@@ -113,77 +190,106 @@ export class Cart implements OnInit {
     const usuario = JSON.parse(usuarioData);
     this.procesandoPago = true;
 
-    console.log('=== DATOS DE LA VENTA ===');
-    console.log('Método de pago seleccionado:', this.metodoPago);
+    console.log('=== INFORMACIÓN DEL USUARIO LOGUEADO ===');
+    console.log('Usuario completo:', usuario);
     console.log('Usuario ID:', usuario.id);
+    console.log('Usuario ROL:', usuario.rol);
+    console.log('Usuario CORREO:', usuario.correo);
+    console.log('¿Tiene id_cliente?:', usuario.id_cliente);
+    console.log('¿Tiene idCliente?:', usuario.idCliente);
+    
+    console.log('\n=== DATOS DE LA VENTA ===');
+    console.log('Método de pago seleccionado:', this.metodoPago);
     console.log('Total a pagar:', this.total);
 
-    // Preparar datos de la venta - Formato compatible con backend Java
+    // Preparar datos según la estructura EXACTA esperada por el backend
     const ventaRequest: any = {
-      venta: {
-        id_cliente: usuario.id,
-        total: this.total,
-        metodo_pago: this.metodoPago.trim(),
-        estado: 'completada',
-        observacion: 'Compra desde web'
-      },
+      id_cliente: usuario.id,
+      metodo_pago: this.metodoPago.trim().toLowerCase(), // "agora" o "tarjeta"
+      total: this.total,
+      tipo_comprobante: "boleta", // o "factura" según prefieras
+      datos_fiscales: null,
       detalles: this.cartItems.map(item => ({
         id_producto: item.product.id,
         cantidad: item.quantity,
         precio_unitario: item.product.price,
-        subtotal: item.product.price * item.quantity,
-        lote: item.product.lote || 'L-MAS-001',
-        fecha_vencimiento: item.product.fecha_vencimiento || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        subtotal: item.product.price * item.quantity
       }))
     };
 
     console.log('Request completo:', JSON.stringify(ventaRequest, null, 2));
-    console.log('Verificación metodo_pago:', ventaRequest.venta.metodo_pago);
-    console.log('Tipo de metodo_pago:', typeof ventaRequest.venta.metodo_pago);
+    console.log('Verificación metodo_pago:', ventaRequest.metodo_pago);
+    console.log('Verificación id_cliente:', ventaRequest.id_cliente);
+    console.log('Verificación tipo_comprobante:', ventaRequest.tipo_comprobante);
     console.log('Número de items en detalles:', ventaRequest.detalles.length);
 
     // Enviar venta al backend
     this.http.post<any>('http://localhost:8080/api/ventas/registrar-venta', ventaRequest).subscribe({
       next: (response) => {
-        console.log('✅ Venta creada:', response);
+        console.log('✅ Venta creada exitosamente:', response);
         this.procesarVentaExitosa(response);
       },
       error: (err) => {
-        console.error('Error al procesar la venta:', err);
+        console.error('❌ Error al procesar la venta');
         console.error('Status:', err.status);
         console.error('Error completo:', err);
-        console.error('Mensaje:', err.error);
+        console.error('Error body:', err.error);
+        console.error('Error message:', err.message);
         
-        // Si es error 400 pero la venta se creó (el backend responde con la data)
-        if (err.status === 400 && err.error && typeof err.error === 'object' && !err.error.success) {
-          // Intentar descargar el PDF con el último ID de factura
-          this.descargarUltimaFactura();
-        } else {
-          this.procesandoPago = false;
-          
-          let mensaje = 'Error al procesar la compra.';
-          if (err.status === 0) {
-            mensaje = 'No se puede conectar con el servidor. Verifica que el backend esté corriendo.';
-          } else if (err.error?.mensaje) {
-            mensaje = err.error.mensaje;
-          } else if (err.error) {
-            mensaje = typeof err.error === 'string' ? err.error : JSON.stringify(err.error);
+        this.procesandoPago = false;
+        
+        let mensaje = 'Error al procesar la compra.';
+        
+        if (err.status === 0) {
+          mensaje = 'No se puede conectar con el servidor. Verifica que el backend esté corriendo en http://localhost:8080';
+        } else if (err.status === 400) {
+          // Error de validación
+          if (err.error?.message) {
+            mensaje = `Error de validación: ${err.error.message}`;
+          } else if (err.error?.errors) {
+            // Si hay errores de validación de campos
+            const errores = Object.entries(err.error.errors).map(([campo, msg]) => `${campo}: ${msg}`).join(', ');
+            mensaje = `Errores de validación: ${errores}`;
+          } else {
+            mensaje = 'Error al validar los datos. Verifica que todos los campos sean correctos.';
           }
-          
-          this.showToast(mensaje, 'error');
+          console.error('Detalles del error 400:', err.error);
+        } else if (err.status === 404) {
+          mensaje = 'El endpoint de ventas no existe. Verifica que el backend tenga la ruta /api/ventas/registrar-venta';
+        } else if (err.status === 500) {
+          mensaje = 'Error interno del servidor. Revisa los logs del backend.';
+        } else if (err.error?.mensaje) {
+          mensaje = err.error.mensaje;
         }
+        
+        this.showToast(mensaje, 'error');
+        
+        // Mostrar detalles en consola para debugging
+        console.error('📋 Datos enviados:', ventaRequest);
+        console.error('⚠️ Mensaje para el usuario:', mensaje);
       }
     });
   }
 
   procesarVentaExitosa(response: any) {
-    console.log('Response del backend:', response);
+    console.log('✅ Response del backend:', response);
     console.log('Tipo de response:', typeof response);
     console.log('Keys de response:', Object.keys(response));
+    console.log('Response completo stringificado:', JSON.stringify(response, null, 2));
     
-    // Intentar obtener el ID de factura de diferentes formas
-    const idFactura = response.id_factura || response.idFactura || response.factura?.id || response.factura?.id_factura;
-    console.log('ID de factura encontrado:', idFactura);
+    // El backend devuelve el id_factura en response.factura.id_factura
+    const idFactura = response.factura?.id_factura 
+                   || response.factura?.idFactura
+                   || response.id_factura 
+                   || response.idFactura 
+                   || response.data?.factura?.id_factura
+                   || response.data?.id_factura
+                   || response.id
+                   || response.ventaId
+                   || response.id_venta;
+    
+    console.log('🔍 ID de factura encontrado:', idFactura);
+    console.log('🔍 Tipo del ID:', typeof idFactura);
     
     this.showToast('¡Compra realizada con éxito! Total: S/ ' + this.total.toFixed(2), 'success');
     
@@ -221,7 +327,7 @@ export class Cart implements OnInit {
   descargarUltimaFactura() {
     const usuarioData = localStorage.getItem('usuario');
     if (!usuarioData) {
-      alert('✅ ¡Compra realizada con éxito!\n\nLa venta se registró correctamente en el sistema.');
+      console.warn('No hay usuario en localStorage');
       this.cartService.clearCart();
       this.procesandoPago = false;
       this.router.navigate(['/client']);
@@ -229,14 +335,18 @@ export class Cart implements OnInit {
     }
 
     const usuario = JSON.parse(usuarioData);
+    console.log('🔍 Buscando última factura del cliente:', usuario.id);
     
     // Obtener la última factura del cliente
     this.facturaService.obtenerUltimaFacturaCliente(usuario.id).subscribe({
       next: (response) => {
         console.log('✅ Última factura obtenida:', response);
-        if (response.id_factura) {
+        if (response && response.id_factura) {
           this.descargarFacturaPDF(response.id_factura);
-          alert(`✅ ¡Compra realizada con éxito!\n\nTotal: S/ ${this.total.toFixed(2)}\nFactura N° ${response.numero_factura}\n\nDescargando factura...`);
+          this.showToast(`Factura N° ${response.numero_factura} lista para descargar`, 'success');
+        } else {
+          console.warn('⚠️ No se encontró ID de factura en la respuesta');
+          this.showToast('Compra realizada. Puedes ver la factura en tu historial.', 'info');
         }
         this.cartService.clearCart();
         this.procesandoPago = false;
@@ -245,9 +355,19 @@ export class Cart implements OnInit {
         }, 1500);
       },
       error: (err) => {
-        console.error('Error al obtener última factura:', err);
-        // Aunque falle obtener la factura, la venta se registró correctamente
-        alert(`✅ ¡Compra realizada con éxito!\n\nTotal: S/ ${this.total.toFixed(2)}\n\nLa venta se registró correctamente.\nPuedes descargar tu factura desde el historial de compras.`);
+        console.error('❌ Error al obtener última factura');
+        console.error('Status:', err.status);
+        console.error('Error:', err);
+        
+        // No mostrar error si es 404 (no hay facturas), es normal
+        if (err.status === 404) {
+          console.log('ℹ️ El cliente aún no tiene facturas registradas');
+          this.showToast('Compra registrada. La factura estará disponible pronto en tu historial.', 'info');
+        } else {
+          console.error('⚠️ Error inesperado al buscar factura:', err.message);
+          this.showToast('Compra realizada. Puedes ver tu factura en el historial de compras.', 'info');
+        }
+        
         this.cartService.clearCart();
         this.procesandoPago = false;
         setTimeout(() => {
@@ -291,14 +411,22 @@ export class Cart implements OnInit {
         console.error('Status:', err.status);
         console.error('Error completo:', err);
         
-        let mensaje = 'La venta se realizó correctamente, pero hubo un error al descargar la factura.';
-        if (err.status === 404) {
+        let mensaje = 'La venta se realizó correctamente, pero hubo un error al generar el PDF.';
+        
+        if (err.status === 500) {
+          mensaje = '✅ Compra exitosa. Error al generar el PDF. Revisa los logs del backend o intenta descargarlo desde el historial.';
+          console.error('💡 Posibles causas del error 500:');
+          console.error('1. JasperReports no está configurado correctamente');
+          console.error('2. Falta la plantilla .jrxml del reporte');
+          console.error('3. Error al consultar datos de la factura en la BD');
+          console.error('4. Librería de generación de PDF no disponible');
+        } else if (err.status === 404) {
           mensaje = 'La factura no fue encontrada. Por favor, verifica en el historial.';
         } else if (err.status === 0) {
           mensaje = 'Error de conexión. El servidor no está respondiendo.';
         }
         
-        this.showToast(mensaje, 'error');
+        this.showToast(mensaje, err.status === 500 ? 'warning' : 'error');
       }
     });
   }
@@ -308,7 +436,84 @@ export class Cart implements OnInit {
     this.showToast('Carrito vaciado', 'info');
   }
 
-  showToast(message: string, type: 'success' | 'error' | 'info' = 'success'): void {
+  // ============================================
+  // MÉTODOS DEL MODAL DE CHECKOUT
+  // ============================================
+
+  openCheckoutModal(): void {
+    if (this.cartItems.length === 0) {
+      this.showToast('El carrito está vacío', 'error');
+      return;
+    }
+
+    // Cargar datos del usuario
+    const usuarioData = localStorage.getItem('usuario');
+    if (usuarioData) {
+      const usuario = JSON.parse(usuarioData);
+      this.checkoutData.email = usuario.correo || '';
+      this.checkoutData.nombre = usuario.nombre || '';
+      this.checkoutData.apellidos = usuario.apellido || '';
+      this.checkoutData.telefono = usuario.telefono || '';
+      this.userEmail = usuario.correo || '';
+    }
+
+    this.checkoutStep = 1;
+    this.showCheckoutModal = true;
+    document.body.style.overflow = 'hidden'; // Bloquear scroll del body
+  }
+
+  closeCheckoutModal(): void {
+    this.showCheckoutModal = false;
+    this.checkoutStep = 1;
+    document.body.style.overflow = ''; // Restaurar scroll
+  }
+
+  closeCheckoutModalOnBackdrop(event: MouseEvent): void {
+    if ((event.target as HTMLElement).classList.contains('checkout-modal')) {
+      this.closeCheckoutModal();
+    }
+  }
+
+  nextStep(): void {
+    if (this.checkoutStep < 3) {
+      this.checkoutStep++;
+    }
+  }
+
+  previousStep(): void {
+    if (this.checkoutStep > 1) {
+      this.checkoutStep--;
+    }
+  }
+
+  selectPaymentMethod(method: string): void {
+    this.metodoPago = method;
+    console.log('Método de pago seleccionado:', this.metodoPago);
+  }
+
+  processPayment(): void {
+    // Validar que el formulario de tarjeta esté completo si se seleccionó tarjeta
+    if (this.metodoPago === 'tarjeta') {
+      if (!this.checkoutData.cardNumber || !this.checkoutData.cardExpiry || 
+          !this.checkoutData.cardCvv || !this.checkoutData.cardName) {
+        this.showToast('Por favor completa todos los datos de la tarjeta', 'error');
+        return;
+      }
+    }
+
+    // Cerrar modal y proceder con el checkout
+    this.showCheckoutModal = false;
+    document.body.style.overflow = '';
+    
+    // Llamar al método checkout original
+    this.checkout();
+  }
+
+  // ============================================
+  // FIN MÉTODOS DEL MODAL
+  // ============================================
+
+  private showToast(message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info'): void {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `

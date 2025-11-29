@@ -85,19 +85,147 @@
           </div>
 
           <div class="payment-method-selector">
-            <label>Método de pago:</label>
-            <select [(ngModel)]="metodoPago" class="payment-select" required>
-              <option value="tarjeta">💳 Tarjeta de crédito/débito</option>
-              <option value="agora">💵 Pago en agora</option>
-            </select>
-            <p style="margin-top: 10px; font-size: 0.9rem; color: #666;">
-              Seleccionado: <strong>{{ metodoPago || 'Ninguno' }}</strong>
-            </p>
+            <label class="payment-label">
+              <i class="fa-solid fa-credit-card"></i>
+              Método de pago:
+            </label>
+            <div class="payment-options">
+              <div class="payment-option" 
+                   [class.selected]="metodoPago === 'tarjeta'" 
+                   (click)="metodoPago = 'tarjeta'">
+                <div class="payment-icon">
+                  <i class="fa-solid fa-credit-card"></i>
+                </div>
+                <div class="payment-info">
+                  <span class="payment-name">Tarjeta</span>
+                  <span class="payment-desc">Crédito/Débito</span>
+                </div>
+                <div class="payment-brands">
+                  <i class="fa-brands fa-cc-visa"></i>
+                  <i class="fa-brands fa-cc-mastercard"></i>
+                </div>
+              </div>
+              
+              <div class="payment-option" 
+                   [class.selected]="metodoPago === 'agora'" 
+                   (click)="metodoPago = 'agora'">
+                <div class="payment-icon">
+                  <i class="fa-solid fa-money-bill-wave"></i>
+                </div>
+                <div class="payment-info">
+                  <span class="payment-name">Pago en Agora</span>
+                  <span class="payment-desc">Escanea el QR</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <button class="btn-checkout" (click)="checkout()" [disabled]="procesandoPago">
-            <i class="fa-solid fa-credit-card"></i>
-            {{ procesandoPago ? 'Procesando pago...' : 'Proceder al pago' }}
+          <!-- Formulario de tarjeta (datos de relleno) -->
+          <div class="card-form" *ngIf="metodoPago === 'tarjeta'">
+            <h3>
+              <i class="fa-solid fa-lock"></i>
+              Datos de la tarjeta (Demo)
+            </h3>
+            <p class="card-info-note">
+              <i class="fa-solid fa-info-circle"></i>
+              Estos son datos de prueba. En producción se integraría con una pasarela de pago real.
+            </p>
+            
+            <div class="form-group">
+              <label>Número de tarjeta</label>
+              <input type="text" 
+                     value="4532 1234 5678 9010" 
+                     readonly 
+                     class="form-control card-input" />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Vencimiento</label>
+                <input type="text" 
+                       value="12/25" 
+                       readonly 
+                       class="form-control card-input" />
+              </div>
+              <div class="form-group">
+                <label>CVV</label>
+                <input type="text" 
+                       value="123" 
+                       readonly 
+                       class="form-control card-input" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Titular de la tarjeta</label>
+              <input type="text" 
+                     value="JUAN PEREZ GARCIA" 
+                     readonly 
+                     class="form-control card-input" />
+            </div>
+
+            <div class="card-visual">
+              <div class="card-chip">
+                <i class="fa-solid fa-credit-card"></i>
+              </div>
+              <div class="card-number">•••• •••• •••• 9010</div>
+              <div class="card-holder">
+                <span class="label">Titular</span>
+                <span class="name">JUAN PEREZ GARCIA</span>
+              </div>
+              <div class="card-brand">
+                <i class="fa-brands fa-cc-visa"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- QR de Agora -->
+          <div class="agora-payment" *ngIf="metodoPago === 'agora'">
+            <div class="agora-header">
+              <i class="fa-solid fa-qrcode"></i>
+              <h3>Pago con Agora</h3>
+            </div>
+            <p class="agora-instructions">
+              Escanea el código QR con tu aplicación de Agora para completar el pago
+            </p>
+            
+            <div class="qr-container">
+              <img [src]="qrCodeUrl" alt="QR Code Agora" class="qr-code" />
+              <div class="qr-overlay">
+                <i class="fa-solid fa-mobile-screen"></i>
+                <span>Escanear con Agora</span>
+              </div>
+            </div>
+
+            <div class="agora-details">
+              <div class="detail-item">
+                <span class="detail-label">Monto a pagar:</span>
+                <span class="detail-value">S/ {{ total | number:'1.2-2' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">ID de transacción:</span>
+                <span class="detail-value">{{ transactionId }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Tiempo restante:</span>
+                <span class="detail-value countdown">{{ countdown }}s</span>
+              </div>
+            </div>
+
+            <div class="agora-note">
+              <i class="fa-solid fa-info-circle"></i>
+              <span>El código QR expirará en {{ countdown }} segundos. Renueva la página si necesitas más tiempo.</span>
+            </div>
+          </div>
+
+          <button class="btn-checkout" (click)="checkout()" [disabled]="procesandoPago || !metodoPago">
+            <span class="btn-icon">
+              <i class="fa-solid fa-lock"></i>
+            </span>
+            <span class="btn-text">
+              {{ procesandoPago ? 'Procesando pago...' : 'Proceder al pago' }}
+            </span>
+            <span class="btn-amount">S/ {{ total | number:'1.2-2' }}</span>
           </button>
 
           <div class="payment-methods">
